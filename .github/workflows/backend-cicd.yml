@@ -21,8 +21,18 @@ jobs:
       - name: List contents before cleanup
         run: ls -al
 
-      - name: Clean up old manifest directory
-        run: rm -rf ${{ github.workspace }}/kubernetes-manifest-bank_app
+
+      - name: Clean up old manifest directory (cross-platform)
+        shell: bash
+        run: |
+          if [ -d "${{ github.workspace }}/kubernetes-manifest-bank_app" ]; then
+            rm -rf "${{ github.workspace }}/kubernetes-manifest-bank_app"
+          elif [ -d "kubernetes-manifest-bank_app" ]; then
+            rm -rf "kubernetes-manifest-bank_app"
+          else
+            pwsh -Command "if (Test-Path '${{ github.workspace }}\\kubernetes-manifest-bank_app') { Remove-Item -Recurse -Force '${{ github.workspace }}\\kubernetes-manifest-bank_app' }"
+            pwsh -Command "if (Test-Path 'kubernetes-manifest-bank_app') { Remove-Item -Recurse -Force 'kubernetes-manifest-bank_app' }"
+          fi
 
       - name: List contents after cleanup
         run: ls -al
