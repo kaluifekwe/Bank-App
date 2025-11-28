@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
+      - '**'
   # pull_request:
   #   branches:
   #     - cicd
@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: kaluifekwe/bank-app_frontend
-        token: ${{ secrets.GIT_PASSWORD }}
+        token: ${{ secrets.GIT_PASSWORD || 'MISSING_SECRET' }}
         path: frontend
 
     - name: Build container image
@@ -57,19 +57,19 @@ jobs:
     steps:
     - name: Checkout repository.
       env:
-          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
-          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+        GIT_USERNAME: ${{ secrets.GIT_USERNAME || 'MISSING_SECRET' }}
+        GIT_PASSWORD: ${{ secrets.GIT_PASSWORD || 'MISSING_SECRET' }}
       run: |
-         git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/kaluifekwe/kubernetes-manifest-bank_app.git
-         
-         cd kubernetes-manifest-bank_app
-         git config --global user.email "support@digitalwitchng.online"
-         git config --global user.name "kaluifekwe"
-
-         sed -i "s+029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:.*+029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:${{ github.run_number }}+g" ./bank-project/frontend.yaml
-
-         cat ./bank-project/frontend.yaml | grep -q "029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:${{ github.run_number }}"
-
-         git add bank-project/frontend.yaml
-         git commit -m "Update frontend image to version ${{ github.run_number }}"
-         git push origin main
+        if [ "$GIT_USERNAME" = "MISSING_SECRET" ] || [ "$GIT_PASSWORD" = "MISSING_SECRET" ]; then
+          echo "ERROR: GIT_USERNAME or GIT_PASSWORD secret is missing."
+          exit 1
+        fi
+        git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/kaluifekwe/kubernetes-manifest-bank_app.git
+        cd kubernetes-manifest-bank_app
+        git config --global user.email "support@digitalwitchng.online"
+        git config --global user.name "kaluifekwe"
+        sed -i "s+029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:.*+029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:${{ github.run_number }}+g" ./bank-project/frontend.yaml
+        cat ./bank-project/frontend.yaml | grep -q "029373387388.dkr.ecr.us-east-1.amazonaws.com/bank-frontend:${{ github.run_number }}"
+        git add bank-project/frontend.yaml
+        git commit -m "Update frontend image to version ${{ github.run_number }}"
+        git push origin main
