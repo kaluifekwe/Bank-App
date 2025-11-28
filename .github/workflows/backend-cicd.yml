@@ -14,35 +14,47 @@ jobs:
   build-and-deploy:
     runs-on: self-hosted
     
+
     steps:
+      - name: Checkout (clean workspace)
+        uses: actions/checkout@v3
+        with:
+          clean: true
+
       - name: Print workspace directory
         run: pwd
 
       - name: List contents before cleanup
-        run: ls -al
-
+        run: |
+          ls -al || dir
 
       - name: Clean up old manifest directory (cross-platform)
         shell: bash
         run: |
           if [ -d "${{ github.workspace }}/kubernetes-manifest-bank_app" ]; then
+            echo "Removing (bash): ${{ github.workspace }}/kubernetes-manifest-bank_app"
             rm -rf "${{ github.workspace }}/kubernetes-manifest-bank_app"
           elif [ -d "kubernetes-manifest-bank_app" ]; then
+            echo "Removing (bash): kubernetes-manifest-bank_app"
             rm -rf "kubernetes-manifest-bank_app"
-          else
+          elif command -v pwsh >/dev/null 2>&1; then
+            echo "Trying PowerShell removal..."
             pwsh -Command "if (Test-Path '${{ github.workspace }}\\kubernetes-manifest-bank_app') { Remove-Item -Recurse -Force '${{ github.workspace }}\\kubernetes-manifest-bank_app' }"
             pwsh -Command "if (Test-Path 'kubernetes-manifest-bank_app') { Remove-Item -Recurse -Force 'kubernetes-manifest-bank_app' }"
+          else
+            echo "No manifest directory found to remove."
           fi
 
       - name: List contents after cleanup
-        run: ls -al
+        run: |
+          ls -al || dir
 
       - name: Checkout Backend Repository
         uses: actions/checkout@v3
         with:
           repository: kaluifekwe/Bank_app_backend
           token: ${{ secrets.GIT_PASSWORD }}
-          path: backend
+          path: backend_src
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -52,11 +64,11 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        working-directory: backend
+        working-directory: backend_src
         run: mvn clean package -DskipTests
 
       - name: Build Docker Image
-        working-directory: backend
+        working-directory: backend_src
         run: |
           docker build -t bank-backendapi:${{ github.sha }} .
           docker tag bank-backendapi:${{ github.sha }} bank-backendapi:latest
