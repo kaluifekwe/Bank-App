@@ -15,8 +15,17 @@ jobs:
     runs-on: self-hosted
     
     steps:
+      - name: Print workspace directory
+        run: pwd
+
+      - name: List contents before cleanup
+        run: ls -al
+
       - name: Clean up old manifest directory
-        run: rm -rf kubernetes-manifest-bank_app
+        run: rm -rf ${{ github.workspace }}/kubernetes-manifest-bank_app
+
+      - name: List contents after cleanup
+        run: ls -al
 
       - name: Checkout Backend Repository
         uses: actions/checkout@v3
