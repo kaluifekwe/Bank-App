@@ -11,11 +11,33 @@ on:
       - 'backend/**'
 
 jobs:
+      - name: Force Remove Manifest Directory (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Remove-Item -Recurse -Force "${{ github.workspace }}\kubernetes-manifest-bank_app" -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Force Remove Manifest Directory (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          rm -rf "${{ github.workspace }}/kubernetes-manifest-bank_app"
+        shell: bash
   build-and-deploy:
     runs-on: self-hosted
     
 
     steps:
+      - name: Force Remove Manifest Directory (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Remove-Item -Recurse -Force "${{ github.workspace }}\kubernetes-manifest-bank_app" -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Force Remove Manifest Directory (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          rm -rf "${{ github.workspace }}/kubernetes-manifest-bank_app"
+        shell: bash
       - name: Checkout (clean workspace)
         uses: actions/checkout@v3
         with:
